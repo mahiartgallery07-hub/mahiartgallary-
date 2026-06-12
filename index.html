@@ -112,7 +112,7 @@
   .product-cat { font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); margin-bottom: 4px; }
   .product-name { font-family: var(--serif); font-size: 15px; font-weight: 500; color: var(--charcoal); margin-bottom: 4px; line-height: 1.3; }
   .product-price { font-family: var(--serif); font-size: 16px; color: var(--gold-dark); font-weight: 600; margin-bottom: 12px; }
-  .product-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .product-actions { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; }
   .btn-view, .btn-buy, .btn-cart { font-family: var(--sans); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; padding: 8px 4px; border: none; cursor: pointer; transition: all .2s; text-align: center; }
   .btn-view { background: var(--ivory); color: var(--mid); border: 1px solid var(--border); }
   .btn-view:hover { border-color: var(--gold); color: var(--gold-dark); }
@@ -299,6 +299,31 @@
   .review-admin-card .rv-text { font-family: var(--serif); font-size: 14px; font-style: italic; color: var(--mid); margin-bottom: 8px; line-height:1.6; }
   .review-admin-card .rv-author { font-size: 11px; letter-spacing:.1em; text-transform:uppercase; color: var(--gold-dark); }
   .review-admin-card .rv-actions { display:flex; gap:8px; margin-top:12px; }
+
+  /* ── LIKE BUTTON ── */
+  .btn-like { background: var(--ivory); color: var(--light-mid); border: 1px solid var(--border); font-family: var(--sans); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; padding: 8px 4px; cursor: pointer; transition: all .2s; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px; }
+  .btn-like:hover, .btn-like.liked { border-color: #e74c3c; color: #e74c3c; background: #fff5f5; }
+  .btn-like .heart { font-size: 11px; transition: transform .2s; }
+  .btn-like.liked .heart { transform: scale(1.25); }
+
+  /* ── SUBCATEGORY BAR ── */
+  .subcat-bar { background: var(--ivory); border-bottom: 1px solid var(--border); display: none; justify-content: center; flex-wrap: wrap; gap: 0; padding: 0 20px; }
+  .subcat-bar.visible { display: flex; }
+  .subcat-bar button { font-family: var(--sans); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; padding: 10px 20px; background: none; border: none; cursor: pointer; color: var(--mid); border-bottom: 2px solid transparent; transition: all .2s; }
+  .subcat-bar button.active, .subcat-bar button:hover { color: var(--gold-dark); border-bottom-color: var(--gold); }
+
+  /* ── DRAG HANDLE in admin ── */
+  .admin-card { border: 1px solid var(--border); background: var(--white); cursor: default; }
+  .drag-handle { cursor: grab; padding: 10px 14px 0; color: var(--light-mid); font-size: 16px; line-height: 1; display: flex; align-items: center; gap: 6px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--light-mid); }
+  .drag-handle:active { cursor: grabbing; }
+  .admin-card.dragging { opacity: .45; border: 2px dashed var(--gold); }
+  .admin-card.drag-over { border-top: 3px solid var(--gold); }
+
+  /* ── CATEGORY ADMIN ── */
+  .cat-manage-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+  .cat-manage-item { display: flex; align-items: center; gap:12px; background: var(--white); border: 1px solid var(--border); padding: 12px 16px; }
+  .cat-manage-item span { flex: 1; font-family: var(--serif); font-size: 15px; }
+  .cat-manage-item .cat-slug { font-size: 11px; color: var(--light-mid); letter-spacing: 0.08em; margin-left: 8px; }
 
   /* ── LOADING ── */
   .loading { display: flex; justify-content: center; align-items: center; padding: 80px; gap: 10px; }
@@ -565,6 +590,11 @@
   <button onclick="filterCategory('men',this)">Men</button>
   <button onclick="filterCategory('women',this)">Women</button>
   <button onclick="filterCategory('handicraft',this)">Handicraft</button>
+</div>
+
+<!-- ── SUBCATEGORY BAR ── -->
+<div class="subcat-bar" id="subcat-bar">
+  <!-- filled dynamically -->
 </div>
 
 <!-- ── TRUST TAGS STRIP ── -->
@@ -853,6 +883,7 @@
     <button class="admin-tab" onclick="switchTab('add-banner')">Add Banner</button>
     <button class="admin-tab" onclick="switchTab('reviews')">Reviews</button>
     <button class="admin-tab" onclick="switchTab('add-review')">Add Review</button>
+    <button class="admin-tab" onclick="switchTab('categories')">Categories</button>
   </div>
   <div class="admin-content">
 
@@ -1020,6 +1051,28 @@
       <p id="review-msg" style="margin-top:14px;font-size:13px;color:var(--gold-dark)"></p>
     </div>
 
+    <!-- CATEGORIES TAB -->
+    <div class="admin-section" id="tab-categories">
+      <h3 style="font-family:var(--serif);font-size:22px;font-weight:400;margin-bottom:8px">Manage Categories</h3>
+      <p style="font-size:13px;color:var(--mid);margin-bottom:24px">Add, remove, or create subcategories. The <strong>All</strong> filter is always shown and cannot be removed.</p>
+      <div id="cat-manage-list" class="cat-manage-list"></div>
+      <div style="border:1px solid var(--border);padding:20px;background:var(--ivory);margin-top:4px">
+        <h4 style="font-family:var(--serif);font-size:16px;font-weight:400;margin-bottom:16px">Add New Category / Subcategory</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Display Name *</label>
+            <input type="text" id="new-cat-name" placeholder="e.g. Bags, Jewellery, Home Décor">
+          </div>
+          <div class="form-group">
+            <label>Parent Category (leave blank for top-level)</label>
+            <select id="new-cat-parent"><option value="">— Top Level —</option></select>
+          </div>
+        </div>
+        <button class="btn-gold" onclick="addCategory()">Add Category</button>
+        <p id="cat-msg" style="margin-top:12px;font-size:13px;color:var(--gold-dark)"></p>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1035,6 +1088,7 @@ const sb = createClient(
 let cart = JSON.parse(localStorage.getItem('contre_cart') || '[]');
 let allProducts = [];
 let currentCategory = 'all';
+let currentSubcat = 'all';
 let currentProduct = null;
 let heroIndex = 0;
 let heroSlides = [];
@@ -1046,6 +1100,13 @@ let modalCurrentImgIndex = 0;
 let modalImages = [];
 let zoomImages = [];
 let zoomIndex = 0;
+let likedProducts = new Set(JSON.parse(localStorage.getItem('mahi_likes') || '[]'));
+// allCategories: [{id, name, slug, parent_slug}] — loaded from Supabase or defaults
+let allCategories = [];
+const DEFAULT_CATEGORIES = [
+  {id:'cat-women',name:'Women',slug:'women',parent_slug:null},
+  {id:'cat-handicraft',name:'Handicraft',slug:'handicraft',parent_slug:null}
+];
 
 // ── CURRENCY SYSTEM ──
 const USD_RATE = 0.012; // 1 INR ≈ 0.012 USD (update as needed)
@@ -1267,23 +1328,49 @@ function formatDescription(text){
   return html;
 }
 
+// ── LOAD CATEGORIES ──
+async function loadCategories(){
+  try{
+    const {data,error}=await sb.from('categories').select('*').order('created_at',{ascending:true});
+    if(error) throw error;
+    allCategories=data||[];
+  }catch(e){
+    allCategories=[...DEFAULT_CATEGORIES];
+  }
+  buildCatBar();
+}
+
+function buildCatBar(){
+  // only top-level categories (no parent)
+  const topCats=allCategories.filter(c=>!c.parent_slug);
+  const catBar=document.querySelector('.cat-bar');
+  catBar.innerHTML=`<button class="active" onclick="filterCategory('all',this)" data-cat="all">All</button>`+
+    topCats.map(c=>`<button onclick="filterCategory('${c.slug}',this)" data-cat="${c.slug}">${c.name}</button>`).join('');
+  // also rebuild mobile menu cats
+  const mobileCats=document.querySelector('.mobile-menu-cats .cat-btns');
+  if(mobileCats){
+    mobileCats.innerHTML=`<button class="active" data-cat="all" onclick="filterCategory('all',null);closeMobileMenu();">All</button>`+
+      topCats.map(c=>`<button data-cat="${c.slug}" onclick="filterCategory('${c.slug}',null);closeMobileMenu();">${c.name}</button>`).join('');
+  }
+}
+
 // ── LOAD PRODUCTS ──
 async function loadProducts(){
   const grid=document.getElementById('product-grid');
   grid.innerHTML='<div class="loading"><span></span><span></span><span></span></div>';
   try{
-    const {data,error}=await sb.from('listings').select('*').order('created_at',{ascending:false});
+    const {data,error}=await sb.from('listings').select('*').order('sort_order',{ascending:true}).order('created_at',{ascending:false});
     if(error) throw error;
     allProducts=data||[];
     renderProducts();
   }catch(e){
     allProducts=[
-      {id:'demo1',name:'Bandhani Silk Saree',price:4500,category:'women',badge:'Bestseller',description:'Handcrafted tie-dye silk saree from Jodhpur artisans.\n\nFeatures:\n- Pure silk fabric\n- Hand-tied bandhani dots\n- Traditional Rajasthani colours\n- Comes with matching blouse piece',images:['https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&q=80']},
-      {id:'demo2',name:'Block Print Kurta',price:1800,category:'men',badge:'',description:'Classic Rajasthani block print cotton kurta.\n\n1. Hand block-printed in Bagru\n2. 100% cotton fabric\n3. Machine washable\n4. Available in multiple sizes',images:['https://images.unsplash.com/photo-1617127365659-c47fa864d8bc?w=600&q=80']},
-      {id:'demo3',name:'Blue Pottery Vase',price:3200,category:'handicraft',badge:'New',description:'Authentic Jodhpur blue pottery, hand-painted by master craftsmen.',images:['https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=600&q=80']},
-      {id:'demo4',name:'Embroidered Jacket',price:5500,category:'women',badge:'',description:'Intricately hand-embroidered jacket with mirror work.',images:['https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?w=600&q=80']},
-      {id:'demo5',name:'Miniature Painting',price:7800,category:'handicraft',badge:'Limited',description:'Traditional Rajasthani miniature painting on handmade paper.',images:['https://images.unsplash.com/photo-1578926288207-a90a5366a65b?w=600&q=80']},
-      {id:'demo6',name:'Camel Leather Bag',price:2900,category:'men',badge:'',description:'Hand-tooled camel leather messenger bag from Jodhpur.',images:['https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&q=80']},
+      {id:'demo1',name:'Bandhani Silk Saree',price:4500,category:'women',badge:'Bestseller',like_count:0,description:'Handcrafted tie-dye silk saree from Jodhpur artisans.\n\nFeatures:\n- Pure silk fabric\n- Hand-tied bandhani dots\n- Traditional Rajasthani colours\n- Comes with matching blouse piece',images:['https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&q=80']},
+      {id:'demo2',name:'Block Print Kurta',price:1800,category:'men',badge:'',like_count:0,description:'Classic Rajasthani block print cotton kurta.\n\n1. Hand block-printed in Bagru\n2. 100% cotton fabric\n3. Machine washable\n4. Available in multiple sizes',images:['https://images.unsplash.com/photo-1617127365659-c47fa864d8bc?w=600&q=80']},
+      {id:'demo3',name:'Blue Pottery Vase',price:3200,category:'handicraft',badge:'New',like_count:0,description:'Authentic Jodhpur blue pottery, hand-painted by master craftsmen.',images:['https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=600&q=80']},
+      {id:'demo4',name:'Embroidered Jacket',price:5500,category:'women',badge:'',like_count:0,description:'Intricately hand-embroidered jacket with mirror work.',images:['https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?w=600&q=80']},
+      {id:'demo5',name:'Miniature Painting',price:7800,category:'handicraft',badge:'Limited',like_count:0,description:'Traditional Rajasthani miniature painting on handmade paper.',images:['https://images.unsplash.com/photo-1578926288207-a90a5366a65b?w=600&q=80']},
+      {id:'demo6',name:'Camel Leather Bag',price:2900,category:'men',badge:'',like_count:0,description:'Hand-tooled camel leather messenger bag from Jodhpur.',images:['https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&q=80']},
     ];
     renderProducts();
   }
@@ -1291,7 +1378,15 @@ async function loadProducts(){
 
 function renderProducts(){
   const grid=document.getElementById('product-grid');
-  let filtered=currentCategory==='all'?allProducts:allProducts.filter(p=>p.category===currentCategory);
+  let filtered=currentCategory==='all'?allProducts:allProducts.filter(p=>p.category===currentCategory||p.category===currentSubcat);
+  // subcategory filter
+  if(currentCategory!=='all'&&currentSubcat!=='all'){
+    filtered=allProducts.filter(p=>p.category===currentSubcat);
+  } else if(currentCategory!=='all'){
+    // show products matching main category OR any of its subcategories
+    const subcatSlugs=allCategories.filter(c=>c.parent_slug===currentCategory).map(c=>c.slug);
+    filtered=allProducts.filter(p=>p.category===currentCategory||subcatSlugs.includes(p.category));
+  }
   const q=document.getElementById('search-input').value.trim().toLowerCase();
   if(q) filtered=filtered.filter(p=>(p.name+p.category+(p.description||'')).toLowerCase().includes(q));
   if(!filtered.length){grid.innerHTML='<p style="padding:40px;color:var(--light-mid);font-family:var(--serif);font-size:18px;font-style:italic;grid-column:1/-1">No pieces found.</p>';return;}
@@ -1299,6 +1394,8 @@ function renderProducts(){
     const imgs=Array.isArray(p.images)?p.images:(p.image_urls?p.image_urls:[p.image_url||''].filter(Boolean));
     const first=imgs[0]||'https://via.placeholder.com/400x500?text='+encodeURIComponent(p.name);
     const dots=imgs.length>1?`<div class="product-img-dots">${imgs.map((_,i)=>`<span class="${i===0?'active':''}" onclick="switchProductImg(event,'${p.id}',${i})"></span>`).join('')}</div>`:'';
+    const isLiked=likedProducts.has(String(p.id));
+    const likeCount=p.like_count||0;
     return `<div class="product-card" data-id="${p.id}">
       <div class="product-img-wrap" onclick="openProduct('${p.id}')" style="cursor:pointer;">
         <img id="pimg-${p.id}" src="${first}" alt="${p.name}" loading="lazy">
@@ -1313,6 +1410,9 @@ function renderProducts(){
           <button class="btn-view" onclick="openProduct('${p.id}')">View</button>
           <button class="btn-buy" onclick="buyNow('${p.id}')">Buy</button>
           <button class="btn-cart" onclick="quickAddCart('${p.id}')">+ Cart</button>
+          <button class="btn-like${isLiked?' liked':''}" onclick="toggleLike(event,'${p.id}')" title="Like this piece">
+            <span class="heart">${isLiked?'♥':'♡'}</span><span id="lc-${p.id}">${likeCount>0?likeCount:''}</span>
+          </button>
         </div>
       </div>
     </div>`;
@@ -1464,16 +1564,36 @@ document.getElementById('imgZoomOverlay').addEventListener('touchend',e=>{
 // ── CATEGORY FILTER ──
 function filterCategory(cat,btn){
   currentCategory=cat;
+  currentSubcat='all';
   document.querySelectorAll('.cat-bar button').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
   // sync mobile menu cat buttons
   document.querySelectorAll('.mobile-menu-cats .cat-btns button').forEach(b=>{
-    b.classList.toggle('active', b.textContent.toLowerCase()===cat||(cat==='all'&&b.textContent.toLowerCase()==='all'));
+    b.classList.toggle('active', b.dataset.cat===cat);
   });
-  const titles={all:'Curated Pieces',men:"Men's Collection",women:"Women's Collection",handicraft:'Handicraft & Art'};
-  document.getElementById('listing-title').textContent=titles[cat]||'Collection';
+  // show subcategory bar if this category has subcategories
+  const subcats=allCategories.filter(c=>c.parent_slug===cat);
+  const subBar=document.getElementById('subcat-bar');
+  if(subcats.length&&cat!=='all'){
+    subBar.innerHTML=`<button class="active" onclick="filterSubcat('all',this)">All ${cat.charAt(0).toUpperCase()+cat.slice(1)}</button>`+
+      subcats.map(s=>`<button onclick="filterSubcat('${s.slug}',this)">${s.name}</button>`).join('');
+    subBar.classList.add('visible');
+  } else {
+    subBar.innerHTML='';
+    subBar.classList.remove('visible');
+  }
+  const titles={all:'Curated Pieces'};
+  const catObj=allCategories.find(c=>c.slug===cat);
+  document.getElementById('listing-title').textContent=titles[cat]||(catObj?catObj.name+"'s Collection":'Collection');
   renderProducts();
   document.getElementById('product-grid').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function filterSubcat(subslug,btn){
+  currentSubcat=subslug;
+  document.querySelectorAll('.subcat-bar button').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderProducts();
 }
 
 // ── SEARCH ──
@@ -1584,14 +1704,23 @@ function openAdmin(){
   loadAdminListings();
   loadAdminBanners();
   loadAdminReviews();
+  loadCategories().then(refreshProdCatDropdown);
+}
+
+function refreshProdCatDropdown(){
+  const sel=document.getElementById('prod-cat');
+  if(!sel) return;
+  const allCats=allCategories; // show all (including subcats) as valid category options
+  const current=sel.value;
+  sel.innerHTML=allCats.map(c=>`<option value="${c.slug}"${c.slug===current?' selected':''}>${c.parent_slug?'↳ ':''} ${c.name}</option>`).join('');
 }
 function closeAdmin(){
   document.getElementById('admin-panel').style.display='none';
   document.body.style.overflow='';
 }
 function switchTab(tab){
+  const tabs=['listings','add-listing','banners','add-banner','reviews','add-review','categories'];
   document.querySelectorAll('.admin-tab').forEach((t,i)=>{
-    const tabs=['listings','add-listing','banners','add-banner','reviews','add-review'];
     t.classList.toggle('active',tabs[i]===tab);
   });
   document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));
@@ -1599,6 +1728,7 @@ function switchTab(tab){
   if(tab==='listings') loadAdminListings();
   if(tab==='banners') loadAdminBanners();
   if(tab==='reviews') loadAdminReviews();
+  if(tab==='categories') loadAdminCategories();
 }
 
 // ── ADMIN: REVIEWS ──
@@ -1736,11 +1866,15 @@ async function loadAdminListings(){
   const grid=document.getElementById('admin-listings-grid');
   grid.innerHTML='<div class="loading"><span></span><span></span><span></span></div>';
   try{
-    const {data}=await sb.from('listings').select('*').order('created_at',{ascending:false});
+    const {data}=await sb.from('listings').select('*').order('sort_order',{ascending:true}).order('created_at',{ascending:false});
     if(!data||!data.length){grid.innerHTML='<p style="color:var(--mid);padding:20px 0;font-size:14px">No listings yet. Add your first piece!</p>';return;}
     grid.innerHTML=data.map(p=>{
       const imgs=Array.isArray(p.images)?p.images:(p.image_urls||[p.image_url||''].filter(Boolean));
-      return `<div class="admin-card">
+      return `<div class="admin-card" data-id="${p.id}">
+        <div class="drag-handle">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9h18M3 15h18"/></svg>
+          drag to reorder
+        </div>
         <img src="${imgs[0]||'https://via.placeholder.com/300?text=No+Image'}" alt="${p.name}" onerror="this.src='https://via.placeholder.com/300?text=No+Image'">
         <div class="admin-card-info">
           <h4>${p.name}</h4>
@@ -1752,6 +1886,7 @@ async function loadAdminListings(){
         </div>
       </div>`;
     }).join('');
+    initDragListings();
   }catch(e){grid.innerHTML='<p style="color:#c0392b;font-size:13px;padding:20px 0">Could not load listings. Check Supabase table "listings" exists.</p>';}
 }
 
@@ -1869,12 +2004,177 @@ async function saveListing(){
 }
 function resetListingForm(){
   ['prod-name','prod-price','prod-badge','prod-desc'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('prod-cat').value='men';
+  refreshProdCatDropdown();
   document.getElementById('edit-listing-id').value='';
   editingListingPhotos=[]; newListingPhotoFiles=[];
   document.getElementById('photo-previews').innerHTML='';
   document.getElementById('listing-form-title').textContent='Add New Listing';
   document.getElementById('listing-msg').textContent='';
+}
+
+// ── LIKE / HEART ──
+async function toggleLike(e,id){
+  e.stopPropagation();
+  const wasLiked=likedProducts.has(String(id));
+  if(wasLiked){ likedProducts.delete(String(id)); } else { likedProducts.add(String(id)); }
+  localStorage.setItem('mahi_likes',JSON.stringify([...likedProducts]));
+  // update like_count in DB
+  try{
+    const p=allProducts.find(x=>String(x.id)===String(id));
+    if(p){
+      const newCount=Math.max(0,(p.like_count||0)+(wasLiked?-1:1));
+      p.like_count=newCount;
+      await sb.from('listings').update({like_count:newCount}).eq('id',id);
+    }
+  }catch(e2){}
+  // update UI inline without full re-render
+  const btn=document.querySelector(`.product-card[data-id="${id}"] .btn-like`);
+  const countEl=document.getElementById('lc-'+id);
+  if(btn){
+    btn.classList.toggle('liked',!wasLiked);
+    btn.querySelector('.heart').textContent=!wasLiked?'♥':'♡';
+    if(btn){btn.style.transform='scale(1.15)';setTimeout(()=>btn.style.transform='',200);}
+  }
+  const p2=allProducts.find(x=>String(x.id)===String(id));
+  if(countEl&&p2) countEl.textContent=p2.like_count>0?p2.like_count:'';
+}
+
+// ── ADMIN: CATEGORIES ──
+async function loadAdminCategories(){
+  await loadCategories();
+  renderAdminCategories();
+}
+
+function renderAdminCategories(){
+  const list=document.getElementById('cat-manage-list');
+  const topCats=allCategories.filter(c=>!c.parent_slug);
+  if(!topCats.length){
+    list.innerHTML='<p style="color:var(--mid);font-size:13px;padding:10px 0">No categories yet. Add one below.</p>';
+  } else {
+    list.innerHTML=topCats.map(cat=>{
+      const subs=allCategories.filter(c=>c.parent_slug===cat.slug);
+      return `<div style="border:1px solid var(--border);background:var(--white);padding:0;overflow:hidden;margin-bottom:0">
+        <div class="cat-manage-item" style="background:var(--ivory)">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 7h18M3 12h18M3 17h18"/></svg>
+          <span style="font-family:var(--serif);font-size:15px;font-weight:500">${cat.name}</span>
+          <code style="font-size:10px;color:var(--light-mid);letter-spacing:0.08em">${cat.slug}</code>
+          <button class="btn-outline" style="padding:5px 10px;font-size:10px;margin-left:auto" onclick="deleteCategory('${cat.id}','${cat.slug}')">Remove</button>
+        </div>
+        ${subs.length?subs.map(s=>`
+          <div class="cat-manage-item" style="padding-left:36px;background:var(--white)">
+            <svg width="10" height="10" fill="var(--gold)" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/></svg>
+            <span style="font-size:14px">${s.name}</span>
+            <code style="font-size:10px;color:var(--light-mid)">${s.slug}</code>
+            <button class="btn-outline" style="padding:4px 8px;font-size:10px;margin-left:auto" onclick="deleteCategory('${s.id}','${s.slug}')">Remove</button>
+          </div>`).join(''):''}
+      </div>`;
+    }).join('');
+  }
+  // update parent dropdown
+  const sel=document.getElementById('new-cat-parent');
+  sel.innerHTML='<option value="">— Top Level —</option>'+
+    topCats.map(c=>`<option value="${c.slug}">${c.name}</option>`).join('');
+}
+
+async function addCategory(){
+  const name=document.getElementById('new-cat-name').value.trim();
+  const parent=document.getElementById('new-cat-parent').value;
+  const msg=document.getElementById('cat-msg');
+  if(!name){msg.textContent='Please enter a category name.';return;}
+  const slug=name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  if(allCategories.find(c=>c.slug===slug)){msg.textContent='A category with this name already exists.';return;}
+  msg.textContent='Saving…';
+  try{
+    const payload={name,slug,parent_slug:parent||null};
+    const {error}=await sb.from('categories').insert([payload]);
+    if(error) throw error;
+    document.getElementById('new-cat-name').value='';
+    document.getElementById('new-cat-parent').value='';
+    msg.textContent='✓ Category added!';
+    toast('Category added: '+name);
+    await loadAdminCategories();
+    buildCatBar();
+  }catch(e){
+    // If table doesn't exist, store locally
+    const newCat={id:'local-'+Date.now(),name,slug,parent_slug:parent||null};
+    allCategories.push(newCat);
+    renderAdminCategories();
+    buildCatBar();
+    msg.textContent='✓ Added (local only — run SQL below to persist):';
+    setTimeout(()=>msg.textContent='',4000);
+    toast('Category added: '+name);
+  }
+}
+
+async function deleteCategory(id,slug){
+  const subs=allCategories.filter(c=>c.parent_slug===slug);
+  const msg=subs.length?`Delete "${slug}" and its ${subs.length} subcategorie(s)?`:`Delete category "${slug}"? Products in this category will still exist but won't appear in this filter.`;
+  if(!confirm(msg)) return;
+  try{
+    // delete subcategories first
+    for(const s of subs){ await sb.from('categories').delete().eq('id',s.id); }
+    await sb.from('categories').delete().eq('id',id);
+    toast('Category removed');
+    await loadAdminCategories();
+    buildCatBar();
+    filterCategory('all',document.querySelector('.cat-bar button'));
+  }catch(e){
+    // local fallback
+    allCategories=allCategories.filter(c=>c.id!==id&&c.parent_slug!==slug);
+    renderAdminCategories();
+    buildCatBar();
+    filterCategory('all',document.querySelector('.cat-bar button'));
+    toast('Removed locally');
+  }
+}
+
+// ── ADMIN: DRAG TO REORDER LISTINGS ──
+let dragSrcId=null;
+
+function initDragListings(){
+  const grid=document.getElementById('admin-listings-grid');
+  grid.querySelectorAll('.admin-card').forEach(card=>{
+    card.setAttribute('draggable','true');
+    card.addEventListener('dragstart',e=>{
+      dragSrcId=card.dataset.id;
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed='move';
+    });
+    card.addEventListener('dragend',()=>card.classList.remove('dragging'));
+    card.addEventListener('dragover',e=>{
+      e.preventDefault();
+      grid.querySelectorAll('.admin-card').forEach(c=>c.classList.remove('drag-over'));
+      card.classList.add('drag-over');
+      e.dataTransfer.dropEffect='move';
+    });
+    card.addEventListener('dragleave',()=>card.classList.remove('drag-over'));
+    card.addEventListener('drop',async e=>{
+      e.preventDefault();
+      card.classList.remove('drag-over');
+      if(!dragSrcId||dragSrcId===card.dataset.id) return;
+      // get current order from DOM
+      const cards=[...grid.querySelectorAll('.admin-card')];
+      const srcIdx=cards.findIndex(c=>c.dataset.id===dragSrcId);
+      const dstIdx=cards.findIndex(c=>c.dataset.id===card.dataset.id);
+      if(srcIdx<0||dstIdx<0) return;
+      // reorder in DOM
+      if(srcIdx<dstIdx){ card.after(grid.querySelector(`[data-id="${dragSrcId}"]`)); }
+      else { card.before(grid.querySelector(`[data-id="${dragSrcId}"]`)); }
+      // save new order to Supabase
+      const newOrder=[...grid.querySelectorAll('.admin-card')].map((c,i)=>({id:c.dataset.id,sort_order:i}));
+      toast('Saving order…');
+      try{
+        for(const item of newOrder){
+          await sb.from('listings').update({sort_order:item.sort_order}).eq('id',item.id);
+        }
+        // update local allProducts order
+        const idOrder=newOrder.map(x=>x.id);
+        allProducts.sort((a,b)=>idOrder.indexOf(String(a.id))-idOrder.indexOf(String(b.id)));
+        toast('Order saved! ✓');
+        await loadProducts();
+      }catch(err){ toast('Could not save order: '+err.message); }
+    });
+  });
 }
 
 // ── ADMIN: BANNERS ──
@@ -1979,7 +2279,7 @@ function resetBannerForm(){
 // ── INIT ──
 detectAndSetCurrency();
 loadBanners();
-loadProducts();
+loadCategories().then(()=>loadProducts());
 loadReviewsOnPage();
 
 </script>
